@@ -1,6 +1,5 @@
 package org.academiadecodigo.bootcamp;
 
-import com.sun.scenario.effect.impl.sw.sse.SSEBlend_SRC_OUTPeer;
 
 import java.io.*;
 import java.net.ServerSocket;
@@ -27,6 +26,7 @@ public class ChatServer {
 
     public void init() throws IOException {
         serverSocket = new ServerSocket(5555);
+        System.out.println(serverSocket.getInetAddress());
     }
 
     public synchronized void run() throws IOException {
@@ -130,11 +130,11 @@ public class ChatServer {
 
             String[] command = msg.split(" ");
             String pmMessage = "";
-           // String teste = nick + pmMessage;
 
             for (int i = 2; i < command.length; i++) {
                 pmMessage += command[i] + " ";
             }
+            String message ="*PM*" + getNick()+ ": " + pmMessage;
 
             System.out.println("entrou nos commandos");
             switch (command[0]) {
@@ -151,9 +151,12 @@ public class ChatServer {
                     out.println("Nick Changed");
                     break;
                 case "/pm":
-                    sendPm(command[1], pmMessage);
+                    sendPm(command[1], message);
                     break;
                 case "/list":
+
+                default:
+                    out.println("Command not found");
 
             }
         }
