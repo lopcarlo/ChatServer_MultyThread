@@ -1,6 +1,9 @@
 package org.academiadecodigo.bootcamp;
 
 
+import javax.imageio.ImageIO;
+import java.awt.*;
+import java.awt.image.BufferedImage;
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -25,7 +28,7 @@ public class ChatServer {
 
 
     public void init() throws IOException {
-        serverSocket = new ServerSocket(5555);
+        serverSocket = new ServerSocket(6666);
         System.out.println(serverSocket.getInetAddress());
     }
 
@@ -38,7 +41,7 @@ public class ChatServer {
             ClientConnection clientConnection = new ClientConnection(socket);
 
             connections.add(clientConnection);
-            ExecutorService fixedPool = Executors.newFixedThreadPool(10);
+            ExecutorService fixedPool = Executors.newFixedThreadPool(50);
             fixedPool.submit(clientConnection);
 
         }
@@ -96,8 +99,16 @@ public class ChatServer {
         public synchronized void run() {
             try {
                 init();
-                out.println("Welcome to the chat: Tell Me your Nickname: ");
+                System.out.println(getNick()+" Connected");
+                welcome();
+                list();
+                out.println("Tell Me your Nickname: ");
                 nick = in.readLine();
+                if (nick.equals("")) {
+                    out.println("Nick name invalid, changed to jackass");
+                    nick = "jackass";
+                }
+                System.out.println(nick+ " Connected");
 
 
             } catch (IOException e) {
@@ -109,7 +120,6 @@ public class ChatServer {
                     String msg = in.readLine();
 
                     if (msg.startsWith("/")) {
-                        System.out.println("no if");
                         commandsAction(msg);
                         continue;
 
@@ -134,7 +144,7 @@ public class ChatServer {
             for (int i = 2; i < command.length; i++) {
                 pmMessage += command[i] + " ";
             }
-            String message ="*PM*" + getNick()+ ": " + pmMessage;
+            String message = "*PM*" + getNick() + ": " + pmMessage;
 
             System.out.println("entrou nos commandos");
             switch (command[0]) {
@@ -154,15 +164,61 @@ public class ChatServer {
                     sendPm(command[1], message);
                     break;
                 case "/list":
-
+                    list();
+                    break;
+                case "/users":
+                    out.println("----------Users Online----------------");
+                    usersOnline();
+                    break;
                 default:
                     out.println("Command not found");
+                    list();
 
             }
         }
 
         public void send(String msg) {
             out.println(msg);
+
+        }
+
+        public void usersOnline() {
+            for (ClientConnection clientConnection : connections) {
+                out.println(clientConnection.getNick());
+            }
+
+        }
+
+        public void list() {
+
+            out.println("##############################################################################################");
+            out.println("# List of available commands                                                                 #");
+            out.println("# /quit                   => exist the program                                               #");
+            out.println("# /nickserv <newnick>     => changes your nick                                               #");
+            out.println("# /pm <nick> <message>    => sends private message to user                                   #");
+            out.println("# /list                   => list all commands                                               #");
+            out.println("# /users                  => list users Online                                               #");
+            out.println("##############################################################################################");
+
+        }
+
+        public void welcome() throws IOException {
+            BufferedImage image = new BufferedImage(144, 32, BufferedImage.TYPE_INT_RGB);
+            Graphics g = image.getGraphics();
+            g.setFont(new Font("Dialog", Font.PLAIN, 24));
+            Graphics2D graphics = (Graphics2D) g;
+            graphics.setRenderingHint(RenderingHints.KEY_TEXT_ANTIALIASING,
+                    RenderingHints.VALUE_TEXT_ANTIALIAS_ON);
+            graphics.drawString("Welcome!", 5, 20);
+            ImageIO.write(image, "png", new File("text.png"));
+
+            for (int y = 0; y < 32; y++) {
+                StringBuilder sb = new StringBuilder();
+                for (int x = 0; x < 144; x++)
+                    sb.append(image.getRGB(x, y) == -16777216 ? " " : image.getRGB(x, y) == -1 ? "#" : "*");
+                if (sb.toString().trim().isEmpty()) continue;
+                out.println(sb);
+            }
 
         }
 
