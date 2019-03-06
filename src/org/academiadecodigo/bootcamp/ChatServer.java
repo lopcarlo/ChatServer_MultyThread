@@ -130,6 +130,7 @@ public class ChatServer {
 
             String[] command = msg.split(" ");
             String pmMessage = "";
+           // String teste = nick + pmMessage;
 
             for (int i = 2; i < command.length; i++) {
                 pmMessage += command[i] + " ";
