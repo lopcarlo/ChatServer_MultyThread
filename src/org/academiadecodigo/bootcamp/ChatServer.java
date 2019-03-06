@@ -129,6 +129,12 @@ public class ChatServer {
         public void commandsAction(String msg) throws IOException {
 
             String[] command = msg.split(" ");
+            String pmMessage = "";
+
+            for (int i = 2; i < command.length; i++) {
+                pmMessage += command[i] + " ";
+            }
+
             System.out.println("entrou nos commandos");
             switch (command[0]) {
                 case "/quit":
@@ -138,14 +144,16 @@ public class ChatServer {
                     out.close();
                     Thread.currentThread().stop();
                     break;
-                case "/Nickserv":
-                    nick = msg.replace(command[0], "");
+                case "/nickserv":
+                    nick = command[1];
                     setNick(nick);
                     out.println("Nick Changed");
                     break;
                 case "/pm":
-                    sendPm(command[1], command[2]);
+                    sendPm(command[1], pmMessage);
                     break;
+                case "/list":
+
 
             }
         }
