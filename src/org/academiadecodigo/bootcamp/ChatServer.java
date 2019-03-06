@@ -154,7 +154,6 @@ public class ChatServer {
                     break;
                 case "/list":
 
-
             }
         }
 
