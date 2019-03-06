@@ -1,5 +1,7 @@
 package org.academiadecodigo.bootcamp;
 
+import com.sun.scenario.effect.impl.sw.sse.SSEBlend_SRC_OUTPeer;
+
 import java.io.*;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -12,74 +14,108 @@ import java.util.concurrent.Executors;
  */
 public class ChatServer {
     private ServerSocket serverSocket;
-    private CopyOnWriteArrayList<ClientConnection> arr = new CopyOnWriteArrayList();
+    private CopyOnWriteArrayList<ClientConnection> connections = new CopyOnWriteArrayList();
     private Socket socket;
 
 
     public void start() throws IOException {
-       init();
-       run();
+        init();
+        run();
 
     }
 
 
-    public void init() throws IOException{
+    public void init() throws IOException {
         serverSocket = new ServerSocket(5555);
     }
 
     public synchronized void run() throws IOException {
 
+        while (serverSocket.isBound()) {
 
-        while(true) {
             socket = serverSocket.accept();
+
             ClientConnection clientConnection = new ClientConnection(socket);
 
-            System.out.println(socket);
-            arr.add(clientConnection);
-            ExecutorService fixedPool = Executors.newFixedThreadPool(200);
+            connections.add(clientConnection);
+            ExecutorService fixedPool = Executors.newFixedThreadPool(10);
             fixedPool.submit(clientConnection);
 
         }
 
     }
 
-    public void sendAll (String msg){
-        for (ClientConnection clientConnection:arr) {
-            System.out.println("sending all");
-            System.out.println(clientConnection);
+    public void sendAll(String msg) {
+        for (ClientConnection clientConnection : connections) {
             clientConnection.send(msg);
 
         }
     }
 
+    public void sendPm(String nick, String msg) {
+        for (ClientConnection clientConnection : connections) {
+            if (clientConnection.getNick().equals(nick))
+                clientConnection.send(msg);
+        }
+
+    }
+
+
     private class ClientConnection implements Runnable {
         private Socket socket;
         private BufferedReader in;
         private PrintWriter out;
+        private String nick = "No Nick";
+
 
         public ClientConnection(Socket socket) {
-            this.socket= socket;
+            this.socket = socket;
         }
 
-        public synchronized void init() throws IOException {
-            in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
-            out = new PrintWriter(socket.getOutputStream(), true);
+        public void setNick(String nick) {
 
+            this.nick = nick;
+        }
+
+        public String getNick() {
+            return nick;
+        }
+
+
+        public void init() {
+            try {
+                in = new BufferedReader(new InputStreamReader(socket.getInputStream()));
+
+                out = new PrintWriter(socket.getOutputStream(), true);
+            } catch (IOException e) {
+                e.printStackTrace();
+            }
         }
 
         @Override
         public synchronized void run() {
             try {
-
                 init();
+                out.println("Welcome to the chat: Tell Me your Nickname: ");
+                nick = in.readLine();
+
+
             } catch (IOException e) {
                 e.printStackTrace();
             }
-            while(true){
+
+            while (true) {
                 try {
                     String msg = in.readLine();
-                    System.out.println(msg);
-                    sendAll(msg);
+
+                    if (msg.startsWith("/")) {
+                        System.out.println("no if");
+                        commandsAction(msg);
+                        continue;
+
+                    }
+
+                    sendAll(nick + ": " + msg);
 
 
                 } catch (IOException e) {
@@ -90,17 +126,36 @@ public class ChatServer {
 
         }
 
-        public void send(String msg){
-            System.out.println("Try to Send");
+        public void commandsAction(String msg) throws IOException {
+
+            String[] command = msg.split(" ");
+            System.out.println("entrou nos commandos");
+            switch (command[0]) {
+                case "/quit":
+                    sendAll(nick + " Disconnected");
+                    socket.close();
+                    in.close();
+                    out.close();
+                    Thread.currentThread().stop();
+                    break;
+                case "/Nickserv":
+                    nick = msg.replace(command[0], "");
+                    setNick(nick);
+                    out.println("Nick Changed");
+                    break;
+                case "/pm":
+                    sendPm(command[1], command[2]);
+                    break;
+
+            }
+        }
+
+        public void send(String msg) {
             out.println(msg);
 
-
         }
 
-        @Override
-        public String toString() {
-            return socket.toString();
-        }
+
     }
 
 
@@ -110,9 +165,6 @@ public class ChatServer {
         server.start();
 
     }
-
-
-
 
 
 }
