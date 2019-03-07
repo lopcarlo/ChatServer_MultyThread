@@ -122,7 +122,7 @@ public class ChatServer {
                 e.printStackTrace();
             }
 
-            while (true) {
+            while (!socket.isClosed()) {
                 try {
 
                         String msg = in.readLine();
