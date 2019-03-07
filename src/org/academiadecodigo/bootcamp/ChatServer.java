@@ -65,8 +65,14 @@ public class ChatServer {
         for (ClientConnection clientConnection : connections) {
             if (clientConnection.getNick().equals(nick))
                 clientConnection.close();
+                connections.remove(clientConnection);
+        }
+    }
 
-
+    public void whipe(String nick) {
+        for(ClientConnection clientConnection : connections){
+            if(clientConnection.getNick().equals(nick))
+            connections.remove(clientConnection);
         }
     }
 
@@ -125,15 +131,15 @@ public class ChatServer {
             while (!socket.isClosed()) {
                 try {
 
-                        String msg = in.readLine();
+                    String msg = in.readLine();
 
-                        if (msg.startsWith("/")) {
-                            commandsAction(msg);
-                            continue;
+                    if (msg.startsWith("/")) {
+                        commandsAction(msg);
+                        continue;
 
-                        }
+                    }
 
-                        sendAll(nick + ": " + msg);
+                    sendAll(nick + ": " + msg);
 
 
                 } catch (IOException e) {
@@ -141,7 +147,6 @@ public class ChatServer {
                 }
 
             }
-
 
 
         }
@@ -160,6 +165,7 @@ public class ChatServer {
             switch (command[0]) {
                 case "/quit":
                     sendAll(nick + " Disconnected");
+                    whipe(getNick());
                     close();
                     Thread.currentThread().stop();
                     break;
@@ -202,6 +208,7 @@ public class ChatServer {
 
         }
 
+
         public void list() {
 
             out.println("##############################################################################################");
@@ -235,11 +242,11 @@ public class ChatServer {
 
         }
 
+
         public void close() throws IOException {
             socket.close();
             in.close();
             out.close();
-
 
 
         }
