@@ -65,7 +65,7 @@ public class ChatServer {
         for (ClientConnection clientConnection : connections) {
             if (clientConnection.getNick().equals(nick))
                 clientConnection.close();
-                connections.remove(clientConnection);
+
         }
     }
 
@@ -186,6 +186,7 @@ public class ChatServer {
                     break;
                 case "/kick":
                     kick(command[1]);
+                    whipe(command[1]);
                     out.println(getNick() + " kicked " + command[1]);
                     break;
                 default:
