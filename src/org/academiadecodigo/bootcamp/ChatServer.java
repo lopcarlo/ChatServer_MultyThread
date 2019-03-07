@@ -35,13 +35,10 @@ public class ChatServer {
     public synchronized void run() throws IOException {
 
         while (serverSocket.isBound()) {
-
-            socket = serverSocket.accept();
-
-            ClientConnection clientConnection = new ClientConnection(socket);
-
-            connections.add(clientConnection);
             fixedPool = Executors.newFixedThreadPool(50);
+            socket = serverSocket.accept();
+            ClientConnection clientConnection = new ClientConnection(socket);
+            connections.add(clientConnection);
             fixedPool.submit(clientConnection);
 
 
@@ -68,6 +65,8 @@ public class ChatServer {
         for (ClientConnection clientConnection : connections) {
             if (clientConnection.getNick().equals(nick))
                 clientConnection.close();
+
+
         }
     }
 
@@ -123,18 +122,18 @@ public class ChatServer {
                 e.printStackTrace();
             }
 
-            while (socket.isConnected()) {
+            while (true) {
                 try {
 
-                    String msg = in.readLine();
+                        String msg = in.readLine();
 
-                    if (msg.startsWith("/")) {
-                        commandsAction(msg);
-                        continue;
+                        if (msg.startsWith("/")) {
+                            commandsAction(msg);
+                            continue;
 
-                    }
+                        }
 
-                    sendAll(nick + ": " + msg);
+                        sendAll(nick + ": " + msg);
 
 
                 } catch (IOException e) {
@@ -142,6 +141,8 @@ public class ChatServer {
                 }
 
             }
+
+
 
         }
 
@@ -238,6 +239,8 @@ public class ChatServer {
             socket.close();
             in.close();
             out.close();
+
+
 
         }
 
