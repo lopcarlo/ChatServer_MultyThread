@@ -18,7 +18,7 @@ public class ChatServer {
     private ServerSocket serverSocket;
     private CopyOnWriteArrayList<ClientConnection> connections = new CopyOnWriteArrayList();
     private Socket socket;
-
+    private ExecutorService fixedPool;
 
     public void start() throws IOException {
         init();
@@ -41,8 +41,9 @@ public class ChatServer {
             ClientConnection clientConnection = new ClientConnection(socket);
 
             connections.add(clientConnection);
-            ExecutorService fixedPool = Executors.newFixedThreadPool(50);
+            fixedPool = Executors.newFixedThreadPool(50);
             fixedPool.submit(clientConnection);
+
 
         }
 
@@ -61,6 +62,13 @@ public class ChatServer {
                 clientConnection.send(msg);
         }
 
+    }
+
+    public void kick(String nick) throws IOException {
+        for (ClientConnection clientConnection : connections) {
+            if (clientConnection.getNick().equals(nick))
+                clientConnection.close();
+        }
     }
 
 
@@ -99,7 +107,7 @@ public class ChatServer {
         public synchronized void run() {
             try {
                 init();
-                System.out.println(getNick()+" Connected");
+                System.out.println(getNick() + " Connected");
                 welcome();
                 list();
                 out.println("Tell Me your Nickname: ");
@@ -108,15 +116,16 @@ public class ChatServer {
                     out.println("Nick name invalid, changed to jackass");
                     nick = "jackass";
                 }
-                System.out.println(nick+ " Connected");
+                System.out.println(nick + " Connected");
 
 
             } catch (IOException e) {
                 e.printStackTrace();
             }
 
-            while (true) {
+            while (socket.isConnected()) {
                 try {
+
                     String msg = in.readLine();
 
                     if (msg.startsWith("/")) {
@@ -150,9 +159,7 @@ public class ChatServer {
             switch (command[0]) {
                 case "/quit":
                     sendAll(nick + " Disconnected");
-                    socket.close();
-                    in.close();
-                    out.close();
+                    close();
                     Thread.currentThread().stop();
                     break;
                 case "/nickserv":
@@ -170,6 +177,10 @@ public class ChatServer {
                     out.println("----------Users Online----------------");
                     usersOnline();
                     break;
+                case "/kick":
+                    kick(command[1]);
+                    out.println(getNick() + " kicked " + command[1]);
+                    break;
                 default:
                     out.println("Command not found");
                     list();
@@ -181,6 +192,7 @@ public class ChatServer {
             out.println(msg);
 
         }
+
 
         public void usersOnline() {
             for (ClientConnection clientConnection : connections) {
@@ -219,6 +231,13 @@ public class ChatServer {
                 if (sb.toString().trim().isEmpty()) continue;
                 out.println(sb);
             }
+
+        }
+
+        public void close() throws IOException {
+            socket.close();
+            in.close();
+            out.close();
 
         }
 
